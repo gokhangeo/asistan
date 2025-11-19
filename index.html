@@ -2,289 +2,592 @@
 <html lang="tr">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Yapay Zeka Destekli Resmi Yazışma Asistanı</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Yazışma Asistanı Elite</title>
     
-    <!-- === Mobil Uygulama ve Ana Ekrana Ekleme Ayarları (PWA) === -->
+    <!-- PWA -->
+    <meta name="theme-color" content="#4f46e5">
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="Yazışma Asistanı">
-    <meta name="application-name" content="Yazışma Asistanı">
-    <meta name="theme-color" content="#1e293b">
     
-    <!-- Web App Manifest (Uygulama Bilgileri ve İkon) -->
-    <link rel="manifest" href="data:application/manifest+json;charset=UTF-8,{
-        &quot;name&quot;: &quot;Yapay Zeka Destekli Resmi Yazışma Asistanı&quot;,
-        &quot;short_name&quot;: &quot;Yazışma Asistanı&quot;,
-        &quot;start_url&quot;: &quot;.&quot;,
-        &quot;display&quot;: &quot;standalone&quot;,
-        &quot;background_color&quot;: &quot;%23f1f5f9&quot;,
-        &quot;theme_color&quot;: &quot;%231e293b&quot;,
-        &quot;description&quot;: &quot;Resmi yazışmalar için yapay zeka destekli metin düzeltme ve iyileştirme aracı.&quot;,
-        &quot;icons&quot;: [
-            {
-                &quot;src&quot;: &quot;data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='192' height='192' viewBox='0 0 24 24' fill='%231e293b' stroke='%23ffffff' stroke-width='1'%3E%3Cpath d='M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z'%3E%3C/path%3E%3C/svg%3E&quot;,
-                &quot;sizes&quot;: &quot;192x192&quot;,
-                &quot;type&quot;: &quot;image/svg+xml&quot;
-            },
-            {
-                &quot;src&quot;: &quot;data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='512' height='512' viewBox='0 0 24 24' fill='%231e293b' stroke='%23ffffff' stroke-width='1'%3E%3Cpath d='M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z'%3E%3C/path%3E%3C/svg%3E&quot;,
-                &quot;sizes&quot;: &quot;512x512&quot;,
-                &quot;type&quot;: &quot;image/svg+xml&quot;
-            }
-        ]
-    }">
-    <link rel="apple-touch-icon" href="data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='192' height='192' viewBox='0 0 24 24' fill='%231e293b' stroke='%23ffffff' stroke-width='1'%3E%3Cpath d='M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z'%3E%3C/path%3E%3C/svg%3E">
-    <!-- === Bitiş: Mobil Uygulama Ayarları === -->
-
+    <!-- Kütüphaneler -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- OCR (Metin Okuma) Kütüphanesi -->
     <script src='https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js'></script>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- PDF.js Kütüphanesi -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+
+    <!-- Tailwind Config -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['"Plus Jakarta Sans"', 'sans-serif'] },
+                    colors: {
+                        brand: { 50: '#eef2ff', 100: '#e0e7ff', 500: '#6366f1', 600: '#4f46e5', 700: '#4338ca', 900: '#312e81' }
+                    },
+                    animation: {
+                        'float': 'float 6s ease-in-out infinite',
+                        'slide-up': 'slideUp 0.5s ease-out'
+                    },
+                    keyframes: {
+                        float: { '0%, 100%': { transform: 'translateY(0)' }, '50%': { transform: 'translateY(-10px)' } },
+                        slideUp: { '0%': { transform: 'translateY(20px)', opacity: '0' }, '100%': { transform: 'translateY(0)', opacity: '1' } }
+                    }
+                }
+            }
+        }
+    </script>
+
     <style>
-        body {
-            font-family: 'Inter', sans-serif;
+        body { background: #f8fafc; overflow-x: hidden; }
+        /* Modern Scrollbar */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        
+        /* Glass Effect */
+        .glass {
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.5);
         }
-        textarea::-webkit-scrollbar { width: 8px; }
-        textarea::-webkit-scrollbar-track { background: #f1f5f9; border-radius: 10px; }
-        textarea::-webkit-scrollbar-thumb { background: #94a3b8; border-radius: 10px; }
-        textarea::-webkit-scrollbar-thumb:hover { background: #475569; }
-        #outputText { white-space: pre-wrap; word-wrap: break-word; }
-        #ocrStatus {
-            transition: opacity 0.3s ease-in-out;
+        
+        .gradient-bg {
+            background: radial-gradient(circle at 0% 0%, #4f46e5 0%, transparent 50%), 
+                        radial-gradient(circle at 100% 100%, #0ea5e9 0%, transparent 50%);
+            opacity: 0.05;
+            position: fixed; inset: 0; z-index: -1;
         }
+
+        /* Print Styles */
+        @media print {
+            body * { visibility: hidden; }
+            #printArea, #printArea * { visibility: visible; }
+            #printArea { position: absolute; left: 0; top: 0; width: 100%; padding: 2cm; font-family: 'Times New Roman', serif; font-size: 12pt; color: black; line-height: 1.5; }
+        }
+
+        .tool-btn { @apply p-2 rounded-lg transition-all duration-200 flex items-center gap-2 text-sm font-medium; }
+        .tool-btn:hover { @apply bg-brand-50 text-brand-700 transform -translate-y-0.5; }
     </style>
 </head>
-<body class="bg-slate-100 min-h-screen flex items-center justify-center p-4">
-    <div class="w-full max-w-6xl mx-auto bg-white rounded-2xl shadow-2xl p-6 md:p-10">
+<body class="text-slate-800 h-screen flex flex-col">
+    
+    <div class="gradient-bg"></div>
+
+    <!-- Header -->
+    <header class="w-full px-6 py-4 flex justify-between items-center glass sticky top-0 z-30 shadow-sm">
+        <div class="flex items-center gap-3">
+            <div class="bg-gradient-to-br from-brand-500 to-sky-500 text-white p-2.5 rounded-xl shadow-lg shadow-brand-500/30">
+                <i class="ph-bold ph-feather text-2xl"></i>
+            </div>
+            <div>
+                <h1 class="text-xl font-bold tracking-tight text-slate-900">Yazışma Asistanı <span class="text-brand-600">Elite</span></h1>
+                <p class="text-xs text-slate-500 font-medium">Yapay Zeka Destekli Editör</p>
+            </div>
+        </div>
         
-        <header class="text-center mb-8">
-            <div class="flex justify-center items-center gap-3">
-                <svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-slate-600"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
-                <h1 class="text-3xl md:text-4xl font-bold text-slate-800">Resmi Yazışma Asistanı</h1>
-            </div>
-            <p class="mt-2 text-md text-slate-500">Metninizi yapıştırın, kamerayla tarayın, düzeltin ve paylaşın.</p>
-        </header>
-
-        <!-- OCR Status Message -->
-        <div id="ocrStatus" class="text-center mb-4 font-medium text-slate-600 opacity-0"></div>
-
-        <main class="grid md:grid-cols-2 gap-6 md:gap-8">
-            
-            <div class="flex flex-col">
-                <label for="inputText" class="text-lg font-semibold text-slate-700 mb-2">Orijinal Metin</label>
-                <div class="flex-grow bg-slate-50 rounded-xl border border-slate-200">
-                    <textarea id="inputText" class="w-full h-96 p-4 bg-transparent rounded-xl resize-none focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Düzeltilecek metni buraya yapıştırınız veya kamerayla tarayınız..."></textarea>
-                </div>
-            </div>
-
-            <div class="flex flex-col">
-                <label for="outputText" class="text-lg font-semibold text-slate-700 mb-2">Düzeltilmiş Metin</label>
-                <div id="outputTextContainer" class="relative flex-grow h-96 bg-white rounded-xl border border-slate-300 p-4 overflow-y-auto">
-                    <div id="outputText" class="text-slate-800">
-                        <span class="text-slate-400">Düzeltilmiş metin burada görünecektir.</span>
-                    </div>
-                    <div id="loadingSpinner" class="hidden absolute inset-0 bg-white bg-opacity-80 flex flex-col items-center justify-center rounded-xl">
-                        <svg class="animate-spin h-8 w-8 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                        </svg>
-                        <p id="loadingText" class="mt-3 text-slate-600 font-medium">Metin işleniyor...</p>
-                    </div>
-                </div>
-            </div>
-        </main>
-        
-        <!-- Action Buttons -->
-        <div class="mt-8 flex flex-wrap items-center justify-center gap-4">
-            <button id="scanButton" class="flex items-center justify-center gap-2 bg-indigo-600 text-white font-bold py-3 px-6 rounded-lg shadow-md hover:bg-indigo-700 transition-all duration-300 transform hover:scale-105 focus:outline-none focus:ring-4 focus:ring-indigo-300">
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"></path><circle cx="12" cy="13" r="3"></circle></svg>
-                <span>Kamera ile Tara</span>
-            </button>
-            <input type="file" id="imageInput" accept="image/*" class="hidden">
-
-            <button id="correctButton" class="flex items-center justify-center gap-2 bg-blue-600 text-white font-bold py-3 px-6 rounded-lg shadow-md hover:bg-blue-700 transition-all duration-300 transform hover:scale-105 focus:outline-none focus:ring-4 focus:ring-blue-300">
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25 0 0 1 5.25 6H10"></path></svg>
-                <span>Düzelt</span>
-            </button>
-            <button id="copyButton" class="flex items-center justify-center gap-2 bg-slate-600 text-white font-bold py-3 px-6 rounded-lg shadow-md hover:bg-slate-700 transition-all duration-300 focus:outline-none focus:ring-4 focus:ring-slate-300">
-                 <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"></rect><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"></path></svg>
-                <span>Kopyala</span>
-            </button>
-            <button id="shareButton" class="flex items-center justify-center gap-2 bg-green-600 text-white font-bold py-3 px-6 rounded-lg shadow-md hover:bg-green-700 transition-all duration-300 transform hover:scale-105 focus:outline-none focus:ring-4 focus:ring-green-300">
-                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"></path><polyline points="16 6 12 2 8 6"></polyline><line x1="12" x2="12" y1="2" y2="15"></line></svg>
-                <span>Paylaş</span>
-            </button>
-             <button id="clearButton" class="flex items-center justify-center gap-2 bg-red-600 text-white font-bold py-3 px-6 rounded-lg shadow-md hover:bg-red-700 transition-all duration-300 focus:outline-none focus:ring-4 focus:ring-red-300">
-                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
-                <span>Temizle</span>
+        <div class="flex gap-2">
+            <button onclick="toggleHistory()" class="tool-btn text-slate-600 bg-white border border-slate-200 hover:border-brand-200 shadow-sm">
+                <i class="ph ph-clock-counter-clockwise text-lg"></i> <span class="hidden md:inline">Geçmiş</span>
             </button>
         </div>
+    </header>
 
-        <footer class="text-center mt-10 border-t border-slate-200 pt-4">
-            <p class="text-sm text-slate-500">&copy; Gökhan ELGÜL tarafından tasarlanmıştır.</p>
-        </footer>
+    <!-- Main Content -->
+    <main class="flex-grow p-4 md:p-6 overflow-hidden">
+        <div class="max-w-8xl mx-auto h-full grid grid-cols-1 lg:grid-cols-2 gap-6">
+            
+            <!-- LEFT COLUMN: Input & Tools -->
+            <div class="flex flex-col h-full gap-4 animate-slide-up">
+                <!-- Toolbar -->
+                <div class="bg-white rounded-2xl p-3 shadow-sm border border-slate-200 flex flex-wrap gap-2 items-center justify-between">
+                    <div class="flex gap-2 overflow-x-auto pb-1 md:pb-0 hide-scrollbar items-center">
+                        <!-- Template Dropdown -->
+                        <div class="relative group">
+                            <button class="tool-btn bg-slate-50 text-slate-700 border border-slate-200">
+                                <i class="ph ph-file-text"></i> Şablonlar
+                            </button>
+                            <div class="absolute top-full left-0 mt-1 w-48 bg-white rounded-xl shadow-xl border border-slate-100 hidden group-hover:block z-50 p-1">
+                                <button onclick="loadTemplate('izin')" class="w-full text-left px-3 py-2 rounded-lg hover:bg-slate-50 text-sm text-slate-600 transition-colors">Yıllık İzin Formu</button>
+                                <button onclick="loadTemplate('tutanak')" class="w-full text-left px-3 py-2 rounded-lg hover:bg-slate-50 text-sm text-slate-600 transition-colors">Toplantı Tutanağı</button>
+                                <button onclick="loadTemplate('gorev')" class="w-full text-left px-3 py-2 rounded-lg hover:bg-slate-50 text-sm text-slate-600 transition-colors">Görevlendirme Yazısı</button>
+                                <button onclick="loadTemplate('istifa')" class="w-full text-left px-3 py-2 rounded-lg hover:bg-slate-50 text-sm text-slate-600 transition-colors">İstifa Dilekçesi</button>
+                            </div>
+                        </div>
+                        
+                        <button id="micButton" class="tool-btn bg-slate-50 text-slate-700 hover:text-red-600 hover:bg-red-50 border border-transparent">
+                            <i class="ph ph-microphone text-lg"></i> <span class="hidden sm:inline">Dikte</span>
+                        </button>
+                        <button id="scanButton" class="tool-btn bg-slate-50 text-slate-700 hover:text-brand-600 border border-transparent">
+                            <i class="ph ph-camera text-lg"></i> <span class="hidden sm:inline">Tara</span>
+                        </button>
+                        
+                        <!-- PDF Butonu -->
+                        <button id="pdfButton" class="tool-btn bg-slate-50 text-slate-700 hover:text-rose-600 border border-transparent">
+                            <i class="ph ph-file-pdf text-lg"></i> <span class="hidden sm:inline">PDF Yükle</span>
+                        </button>
+
+                        <input type="file" id="imageInput" accept="image/*" class="hidden">
+                        <input type="file" id="pdfInput" accept="application/pdf" class="hidden">
+                    </div>
+
+                    <div class="flex items-center gap-2">
+                        <button onclick="clearInput()" class="p-2 text-slate-400 hover:text-red-500 transition-colors" title="Temizle">
+                            <i class="ph ph-trash text-lg"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Editor Area -->
+                <div class="flex-grow relative bg-white rounded-3xl shadow-lg border border-slate-200 group focus-within:ring-2 ring-brand-100 transition-all duration-300">
+                    <textarea id="inputText" class="w-full h-full p-6 bg-transparent resize-none focus:outline-none text-slate-700 text-lg leading-relaxed font-normal placeholder:text-slate-300" placeholder="Metninizi buraya yazın, PDF yükleyin veya bir şablon seçin..."></textarea>
+                    
+                    <!-- Stats Bar -->
+                    <div class="absolute bottom-0 inset-x-0 bg-slate-50/80 backdrop-blur border-t border-slate-100 px-4 py-2 rounded-b-3xl flex justify-between text-xs font-medium text-slate-500">
+                        <span id="wordCount">0 Kelime</span>
+                        <span id="charCount">0 Karakter</span>
+                    </div>
+                    
+                    <!-- OCR & PDF Processing Overlay -->
+                    <div id="processStatus" class="absolute inset-0 bg-slate-900/80 backdrop-blur-sm rounded-3xl flex flex-col items-center justify-center text-white z-20 opacity-0 pointer-events-none transition-opacity duration-300">
+                        <div class="w-12 h-12 border-4 border-white/20 border-t-white rounded-full animate-spin mb-3"></div>
+                        <p id="processText">İşleniyor...</p>
+                    </div>
+                </div>
+
+                <!-- Action Bar -->
+                <div class="bg-white rounded-2xl p-3 shadow-sm border border-slate-200 flex flex-col sm:flex-row gap-3">
+                    <div class="flex-grow relative">
+                        <select id="toneSelect" class="w-full appearance-none bg-slate-50 border border-slate-200 text-slate-700 py-3 px-4 pr-8 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-500/20 font-medium cursor-pointer">
+                            <option value="standard">Resmi (Standart)</option>
+                            <option value="petition">Dilekçe Formatı</option>
+                            <option value="polite">Nazik / Rica Üslubu</option>
+                            <option value="executive">Yönetici Özeti (Kısa)</option>
+                            <option value="academic">Akademik / Teknik</option>
+                            <option value="fix_only">Sadece İmla Düzelt</option>
+                        </select>
+                        <i class="ph-bold ph-caret-down absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none"></i>
+                    </div>
+                    
+                    <button id="correctButton" class="bg-gradient-to-r from-brand-600 to-brand-500 hover:from-brand-700 hover:to-brand-600 text-white py-3 px-8 rounded-xl font-bold shadow-lg shadow-brand-500/30 transform active:scale-95 transition-all flex items-center justify-center gap-2 whitespace-nowrap">
+                        <i class="ph-fill ph-magic-wand"></i>
+                        Yapay Zeka ile Düzenle
+                    </button>
+                </div>
+            </div>
+
+            <!-- RIGHT COLUMN: Output -->
+            <div class="flex flex-col h-full gap-4 animate-slide-up" style="animation-delay: 0.1s;">
+                <!-- Output Toolbar -->
+                <div class="bg-white rounded-2xl p-3 shadow-sm border border-slate-200 flex justify-between items-center">
+                    <span class="font-semibold text-emerald-600 flex items-center gap-2 px-2">
+                        <i class="ph-fill ph-check-circle text-xl"></i> Hazır Metin
+                    </span>
+                    <div class="flex gap-1">
+                        <button onclick="exportWord()" id="wordBtn" class="tool-btn hover:bg-blue-50 hover:text-blue-600 opacity-50 cursor-not-allowed" disabled title="Word İndir">
+                            <i class="ph ph-file-doc text-lg"></i> <span class="hidden lg:inline">Word</span>
+                        </button>
+                        <button id="printBtn" class="tool-btn hover:bg-slate-100 opacity-50 cursor-not-allowed" disabled title="PDF/Yazdır">
+                            <i class="ph ph-printer text-lg"></i>
+                        </button>
+                        <button id="copyBtn" class="tool-btn hover:bg-emerald-50 hover:text-emerald-600 opacity-50 cursor-not-allowed" disabled title="Kopyala">
+                            <i class="ph ph-copy text-lg"></i>
+                        </button>
+                        <button id="shareBtn" class="tool-btn hover:bg-purple-50 hover:text-purple-600 opacity-50 cursor-not-allowed" disabled title="Paylaş">
+                            <i class="ph ph-share-network text-lg"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Output Editor -->
+                <div class="flex-grow relative bg-white rounded-3xl shadow-lg border border-slate-200 overflow-hidden">
+                    <div id="outputTextContainer" class="h-full overflow-y-auto p-6 md:p-8 bg-white">
+                        <div id="printArea" class="hidden"></div> <!-- Hidden Print Area -->
+                        
+                        <div id="outputText" class="prose prose-slate prose-lg max-w-none text-slate-800 whitespace-pre-wrap leading-relaxed empty:hidden">
+                            <!-- Empty State -->
+                            <div class="flex flex-col items-center justify-center h-full min-h-[300px] text-slate-300 select-none">
+                                <div class="w-20 h-20 bg-slate-50 rounded-full flex items-center justify-center mb-4">
+                                    <i class="ph ph-sparkle text-4xl text-slate-200"></i>
+                                </div>
+                                <p class="text-sm font-medium">Sonuç burada görüntülenecek</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Loading Overlay -->
+                    <div id="loadingSpinner" class="absolute inset-0 bg-white/90 backdrop-blur-sm flex flex-col items-center justify-center z-20 hidden">
+                        <div class="flex items-center gap-1 mb-4">
+                            <span class="w-3 h-3 bg-brand-500 rounded-full animate-bounce" style="animation-delay: 0s"></span>
+                            <span class="w-3 h-3 bg-brand-500 rounded-full animate-bounce" style="animation-delay: 0.1s"></span>
+                            <span class="w-3 h-3 bg-brand-500 rounded-full animate-bounce" style="animation-delay: 0.2s"></span>
+                        </div>
+                        <p id="loadingText" class="text-brand-600 font-medium text-sm animate-pulse">Yapay zeka en uygun kelimeleri seçiyor...</p>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <!-- History Slide-Over -->
+    <div id="historyModal" class="fixed inset-0 z-50 hidden bg-slate-900/20 backdrop-blur-sm transition-opacity">
+        <div class="absolute inset-y-0 right-0 w-full max-w-md bg-white shadow-2xl transform transition-transform duration-300 translate-x-full flex flex-col" id="historyPanel">
+            <div class="p-5 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
+                <h2 class="text-lg font-bold text-slate-800 flex items-center gap-2">
+                    <i class="ph-fill ph-clock-counter-clockwise text-brand-600"></i> İşlem Geçmişi
+                </h2>
+                <button onclick="toggleHistory()" class="p-2 hover:bg-slate-100 rounded-full transition-colors">
+                    <i class="ph ph-x text-lg"></i>
+                </button>
+            </div>
+            <div id="historyList" class="flex-1 overflow-y-auto p-4 space-y-3 bg-slate-50/30">
+                <!-- Items will be injected here -->
+            </div>
+            <div class="p-4 border-t border-slate-100 bg-white">
+                <button onclick="clearHistory()" class="w-full py-3 text-red-600 hover:bg-red-50 rounded-xl text-sm font-semibold transition-colors flex items-center justify-center gap-2">
+                    <i class="ph ph-trash"></i> Tüm Geçmişi Temizle
+                </button>
+            </div>
+        </div>
     </div>
 
+    <footer class="text-center py-3 text-slate-400 text-[10px] font-medium tracking-wide uppercase">
+        Designed for Excellence by Gökhan Elgül
+    </footer>
+
     <script>
-        // DOM Element References
-        const inputText = document.getElementById('inputText');
-        const outputText = document.getElementById('outputText');
-        const correctButton = document.getElementById('correctButton');
-        const copyButton = document.getElementById('copyButton');
-        const clearButton = document.getElementById('clearButton');
-        const loadingSpinner = document.getElementById('loadingSpinner');
-        const loadingText = document.getElementById('loadingText');
-        const outputTextContainer = document.getElementById('outputTextContainer');
-        const scanButton = document.getElementById('scanButton');
-        const imageInput = document.getElementById('imageInput');
-        const ocrStatus = document.getElementById('ocrStatus');
-        const shareButton = document.getElementById('shareButton');
+        // --- Config & Globals ---
+        const apiKey = "AIzaSyCxG-n6HpUKNB1_OWlurIxApRhRfgFMHfc";
+        let historyData = JSON.parse(localStorage.getItem('yazismaHistoryElite')) || [];
         
-        const placeholderText = '<span class="text-slate-400">Düzeltilmiş metin burada görünecektir.</span>';
+        // PDF.js Worker Ayarı
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
 
-        // --- YENİ: Kamera ile Tarama (OCR) İşlevi ---
-        scanButton.addEventListener('click', () => {
-            imageInput.click();
+        // --- DOM Elements ---
+        const els = {
+            input: document.getElementById('inputText'),
+            output: document.getElementById('outputText'),
+            outputContainer: document.getElementById('outputTextContainer'),
+            wordCount: document.getElementById('wordCount'),
+            charCount: document.getElementById('charCount'),
+            toneSelect: document.getElementById('toneSelect'),
+            loading: document.getElementById('loadingSpinner'),
+            loadingText: document.getElementById('loadingText'),
+            processStatus: document.getElementById('processStatus'),
+            processText: document.getElementById('processText'),
+            btns: {
+                correct: document.getElementById('correctButton'),
+                copy: document.getElementById('copyBtn'),
+                word: document.getElementById('wordBtn'),
+                print: document.getElementById('printBtn'),
+                share: document.getElementById('shareBtn'),
+                mic: document.getElementById('micButton'),
+                scan: document.getElementById('scanButton'),
+                pdf: document.getElementById('pdfButton')
+            },
+            history: {
+                modal: document.getElementById('historyModal'),
+                panel: document.getElementById('historyPanel'),
+                list: document.getElementById('historyList')
+            }
+        };
+
+        // --- Live Stats ---
+        els.input.addEventListener('input', () => {
+            const text = els.input.value;
+            els.charCount.textContent = `${text.length} Karakter`;
+            els.wordCount.textContent = `${text.trim() === '' ? 0 : text.trim().split(/\s+/).length} Kelime`;
         });
 
-        imageInput.addEventListener('change', (event) => {
-            const file = event.target.files[0];
-            if (!file) return;
+        // --- Templates ---
+        const templates = {
+            izin: "....... MÜDÜRLÜĞÜNE\n\nKurumunuzda ....... sicil numarası ile ....... olarak görev yapmaktayım. .../.../202.. tarihinden itibaren ... gün süreyle yıllık iznimi kullanmak istiyorum. İznimi ....... adresinde geçireceğim.\n\nGereğini bilgilerinize arz ederim.\n\nAdres:\nTel:",
+            tutanak: "TUTANAK\n\nKONU: .......\n\n.../.../202.. tarihinde saat ...:... sularında ....... yerinde meydana gelen olayda; ......................................................................................................................................................................... tespit edilmiştir.\n\nİşbu tutanak tarafımızca imza altına alınmıştır.",
+            gorev: "....... MAKAMINA\n\nİlgi: .../.../202.. tarihli ve ....... sayılı yazı.\n\n....... tarihinde ....... ilinde düzenlenecek olan ....... toplantısına/eğitimine katılmak üzere, ....... personelinin görevlendirilmesi hususunu;\n\nOlurlarınıza arz ederim.",
+            istifa: "....... YÖNETİM KURULU BAŞKANLIĞI'NA\n\n.../.../202.. tarihinden beri şirketinizde ....... pozisyonunda çalışmaktayım. Özel sebeplerden dolayı .../.../202.. tarihi itibarıyla görevimden istifa ediyorum.\n\nGerekli işlemlerin yapılmasını saygılarımla arz ederim."
+        };
 
-            loadingText.textContent = 'Metin okunuyor...';
-            loadingSpinner.classList.remove('hidden');
-            setButtonsDisabled(true);
-            
-            Tesseract.recognize(
-                file,
-                'tur', 
-                { 
-                    logger: m => {
-                        if (m.status === 'recognizing text') {
-                           const progress = (m.progress * 100).toFixed(0);
-                           ocrStatus.textContent = `Metin taranıyor... %${progress}`;
-                           ocrStatus.style.opacity = '1';
-                        }
-                    } 
-                }
-            ).then(({ data: { text } }) => {
-                inputText.value = text;
-                ocrStatus.textContent = 'Metin başarıyla okundu!';
-                setTimeout(() => { ocrStatus.style.opacity = '0'; }, 3000);
-            }).catch(err => {
-                console.error(err);
-                ocrStatus.textContent = 'Metin okunurken bir hata oluştu.';
-                ocrStatus.style.opacity = '1';
-            }).finally(() => {
-                loadingSpinner.classList.add('hidden');
-                setButtonsDisabled(false);
-                imageInput.value = ''; 
-            });
-        });
-
-        // --- YENİ: Paylaşma İşlevi ---
-        if (!navigator.share) {
-            shareButton.style.display = 'none';
+        function loadTemplate(key) {
+            els.input.value = templates[key];
+            els.input.dispatchEvent(new Event('input'));
+            els.input.focus();
         }
 
-        shareButton.addEventListener('click', async () => {
-            const textToShare = outputText.innerText;
-            if (textToShare && !outputText.querySelector('span')) {
-                try {
-                    await navigator.share({
-                        title: 'Düzeltilmiş Metin',
-                        text: textToShare,
-                    });
-                } catch (err) {
-                    console.error('Paylaşma hatası:', err);
-                }
-            } else {
-                const originalText = shareButton.innerHTML;
-                shareButton.innerHTML = `<span>Önce Düzeltin</span>`;
-                setTimeout(() => {
-                    shareButton.innerHTML = originalText;
-                }, 2000);
+        function clearInput() {
+            if(confirm("Taslak silinsin mi?")) {
+                els.input.value = '';
+                els.input.dispatchEvent(new Event('input'));
+                els.output.innerHTML = `<div class="flex flex-col items-center justify-center h-full min-h-[300px] text-slate-300 select-none"><div class="w-20 h-20 bg-slate-50 rounded-full flex items-center justify-center mb-4"><i class="ph ph-sparkle text-4xl text-slate-200"></i></div><p class="text-sm font-medium">Sonuç burada görüntülenecek</p></div>`;
+                setActionsEnabled(false);
             }
-        });
+        }
 
-        // --- Mevcut İşlevler (API ANAHTARI İLE GÜNCELLENDİ) ---
-        correctButton.addEventListener('click', async () => {
-            // === API ANAHTARI SİZİN TARAFINIZDAN EKLENDİ ===
-            const apiKey = "AIzaSyCxG-n6HpUKNB1_OWlurIxApRhRfgFMHfc"; 
+        function showProcessStatus(show, text = "İşleniyor...") {
+            els.processText.innerText = text;
+            els.processStatus.style.opacity = show ? '1' : '0';
+            els.processStatus.style.pointerEvents = show ? 'auto' : 'none';
+        }
 
-            if (!apiKey || apiKey.includes("YAPIŞTIRIN")) {
-                 outputText.innerHTML = `<span class="text-red-500">Lütfen kodun içindeki 'apiKey' değişkenine Google AI Studio'dan aldığınız ücretsiz anahtarı yapıştırın.</span>`;
-                 return;
-            }
+        // --- Speech Recognition ---
+        if ('webkitSpeechRecognition' in window) {
+            const recognition = new webkitSpeechRecognition();
+            recognition.lang = 'tr-TR';
+            recognition.continuous = false;
             
-            const originalText = inputText.value.trim();
-            if (!originalText) {
-                outputText.innerHTML = '<span class="text-red-500">Lütfen düzeltilecek bir metin girin.</span>';
+            els.btns.mic.onclick = () => {
+                if (els.btns.mic.classList.contains('bg-red-500')) recognition.stop();
+                else recognition.start();
+            };
+
+            recognition.onstart = () => {
+                els.btns.mic.classList.remove('bg-slate-50', 'text-slate-700');
+                els.btns.mic.classList.add('bg-red-500', 'text-white', 'animate-pulse');
+            };
+
+            recognition.onend = () => {
+                els.btns.mic.classList.add('bg-slate-50', 'text-slate-700');
+                els.btns.mic.classList.remove('bg-red-500', 'text-white', 'animate-pulse');
+            };
+
+            recognition.onresult = (e) => {
+                const t = e.results[0][0].transcript;
+                els.input.value = els.input.value ? els.input.value + " " + t : t;
+                els.input.dispatchEvent(new Event('input'));
+            };
+        } else {
+            els.btns.mic.style.display = 'none';
+        }
+
+        // --- OCR (Image) ---
+        const imgInput = document.getElementById('imageInput');
+        els.btns.scan.onclick = () => imgInput.click();
+        imgInput.onchange = (e) => {
+            const file = e.target.files[0];
+            if(!file) return;
+            
+            showProcessStatus(true, "Görsel Okunuyor...");
+            
+            Tesseract.recognize(file, 'tur').then(({ data: { text } }) => {
+                els.input.value = text;
+                els.input.dispatchEvent(new Event('input'));
+            }).finally(() => {
+                showProcessStatus(false);
+                imgInput.value = '';
+            });
+        };
+
+        // --- PDF UPLOAD & PARSE LOGIC ---
+        const pdfInput = document.getElementById('pdfInput');
+        els.btns.pdf.onclick = () => pdfInput.click();
+
+        pdfInput.onchange = async (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+            if (file.type !== 'application/pdf') {
+                alert('Lütfen geçerli bir PDF dosyası seçin.');
                 return;
             }
 
-            loadingText.textContent = 'Yapay zeka düzeltiyor...';
-            loadingSpinner.classList.remove('hidden');
-            setButtonsDisabled(true);
+            showProcessStatus(true, "PDF Ayrıştırılıyor...");
 
             try {
-                const prompt = `Sen Türkiye'deki resmi yazışma kuralları konusunda uzman bir asistansın. Görevin, aşağıda verilen metni analiz etmek ve "Resmi Yazışmalarda Uygulanacak Usul ve Esaslar Hakkında Yönetmelik" hükümlerine, ayrıca Türk Dil Kurumu'nun güncel yazım ve imla kurallarına uygun olarak yeniden yazmaktır. Sadece ve sadece düzeltilmiş metni sonuç olarak döndür. Öncesinde veya sonrasında herhangi bir açıklama, selamlama veya yorum ekleme. İşte düzeltilecek metin:\n---\n${originalText}\n---`;
-                const payload = { contents: [{ role: "user", parts: [{ text: prompt }] }] };
-                const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
-                
-                const response = await fetch(apiUrl, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
-                });
+                const arrayBuffer = await file.arrayBuffer();
+                const pdf = await pdfjsLib.getDocument(arrayBuffer).promise;
+                let fullText = '';
 
-                if (!response.ok) throw new Error(`API isteği başarısız oldu: ${response.status}.`);
-                
-                const result = await response.json();
-
-                if (result.candidates?.[0]?.content?.parts?.[0]?.text) {
-                    outputText.innerText = result.candidates[0].content.parts[0].text.trim();
-                } else {
-                    throw new Error("API'den geçerli bir yanıt alınamadı.");
+                for (let i = 1; i <= pdf.numPages; i++) {
+                    showProcessStatus(true, `PDF Okunuyor... Sayfa ${i}/${pdf.numPages}`);
+                    const page = await pdf.getPage(i);
+                    const textContent = await page.getTextContent();
+                    const pageText = textContent.items.map(item => item.str).join(' ');
+                    fullText += pageText + "\n\n";
                 }
 
+                els.input.value = fullText.trim();
+                els.input.dispatchEvent(new Event('input'));
+
             } catch (error) {
-                console.error("Hata:", error);
-                outputText.innerHTML = `<span class="text-red-500">Bir hata oluştu. Lütfen tekrar deneyin. Hata: ${error.message}</span>`;
+                console.error('PDF Hatası:', error);
+                alert('PDF okunurken bir hata oluştu. Dosya şifreli veya bozuk olabilir.');
             } finally {
-                loadingSpinner.classList.add('hidden');
-                setButtonsDisabled(false);
+                showProcessStatus(false);
+                pdfInput.value = '';
             }
-        });
+        };
 
-        copyButton.addEventListener('click', () => {
-            const textToCopy = outputText.innerText;
-            if (textToCopy && !outputText.querySelector('span')) {
-                navigator.clipboard.writeText(textToCopy).then(() => {
-                    const originalText = copyButton.innerHTML;
-                    copyButton.innerHTML = `<span>Kopyalandı!</span>`;
-                    setTimeout(() => { copyButton.innerHTML = originalText; }, 2000);
+        // --- AI Processing (GÜNCELLENMİŞ - ZAMAN AŞIMI KORUMALI) ---
+        els.btns.correct.addEventListener('click', async () => {
+            const text = els.input.value.trim();
+            if (!text) return alert("Lütfen metin girin.");
+
+            // UI Hazırlığı
+            els.loading.classList.remove('hidden');
+            els.btns.correct.disabled = true;
+            
+            const tone = els.toneSelect.value;
+            let prompt = "Sen uzman bir resmi yazışma asistanısın. ";
+            
+            if (tone === 'standard') prompt += "Metni standart resmi yazışma kurallarına ve TDK'ya göre düzenle.";
+            else if (tone === 'petition') prompt += "Metni resmi bir dilekçe formatına dönüştür (Giriş, gelişme, Arz ederim vb.).";
+            else if (tone === 'polite') prompt += "Metni daha nazik, yapıcı ve işbirlikçi bir dille (rica ederek) yeniden yaz.";
+            else if (tone === 'executive') prompt += "Metni yöneticiler için kısa, öz ve net maddeler halinde özetle.";
+            else if (tone === 'academic') prompt += "Metni akademik ve teknik bir dille, edilgen çatı kullanarak yeniden yaz.";
+            else if (tone === 'fix_only') prompt += "Metnin içeriğini ve üslubunu değiştirmeden sadece imla ve gramer hatalarını düzelt.";
+
+            prompt += `\n\nMetin:\n${text}\n\nSadece sonucu ver.`;
+
+            // Zaman Aşımı Denetleyicisi (30 Saniye)
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 30000);
+
+            try {
+                const resp = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ contents: [{ role: "user", parts: [{ text: prompt }] }] }),
+                    signal: controller.signal // Sinyali bağladık
                 });
+
+                clearTimeout(timeoutId); // İşlem başarılı, zaman aşımını iptal et
+
+                if (!resp.ok) {
+                    throw new Error(`Sunucu Hatası (${resp.status})`);
+                }
+
+                const result = await resp.json();
+                const corrected = result.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
+
+                if (corrected) {
+                    els.output.innerText = corrected;
+                    
+                    // Kutlama efekti (Hata verirse akışı bozmasın diye try-catch içinde)
+                    try {
+                        confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 }, colors: ['#4f46e5', '#0ea5e9'] });
+                    } catch(e) { console.log("Efekt hatası", e); }
+                    
+                    setActionsEnabled(true);
+                    
+                    // Geçmişe kaydetme (Hata verirse akışı bozmasın)
+                    try {
+                        saveToHistory(text, corrected, tone);
+                    } catch(e) { console.error("Geçmiş kayıt hatası:", e); }
+                    
+                    if(window.innerWidth < 1024) els.outputContainer.scrollIntoView({behavior: 'smooth'});
+                } else {
+                    throw new Error('Yapay zeka boş bir yanıt döndürdü.');
+                }
+            } catch (err) {
+                // Hata mesajını göster
+                let msg = err.message;
+                if (err.name === 'AbortError') {
+                    msg = "İşlem zaman aşımına uğradı (30sn). Lütfen internet bağlantınızı kontrol edip tekrar deneyin.";
+                }
+                els.output.innerHTML = `<span class="text-red-500 font-bold">Hata: ${msg}</span>`;
+            } finally {
+                // Her durumda yükleniyor ekranını kaldır ve butonu aktif et
+                els.loading.classList.add('hidden');
+                els.btns.correct.disabled = false;
             }
         });
-        
-        clearButton.addEventListener('click', () => {
-            inputText.value = '';
-            outputText.innerHTML = placeholderText;
-        });
 
-        function setButtonsDisabled(disabled) {
-            correctButton.disabled = disabled;
-            scanButton.disabled = disabled;
-            copyButton.disabled = disabled;
-            shareButton.disabled = disabled;
-            clearButton.disabled = disabled;
+        // --- Output Actions ---
+        function setActionsEnabled(enabled) {
+            const btns = [els.btns.copy, els.btns.print, els.btns.share, els.btns.word];
+            btns.forEach(btn => {
+                btn.disabled = !enabled;
+                btn.classList.toggle('opacity-50', !enabled);
+                btn.classList.toggle('cursor-not-allowed', !enabled);
+            });
+            if(enabled) {
+                document.getElementById('printArea').innerHTML = els.output.innerText.replace(/\n/g, '<br>');
+            }
         }
 
+        els.btns.copy.onclick = () => {
+            navigator.clipboard.writeText(els.output.innerText);
+            const i = els.btns.copy.querySelector('i');
+            const originalClass = i.className;
+            i.className = "ph-bold ph-check text-emerald-600";
+            setTimeout(() => i.className = originalClass, 2000);
+        };
+
+        els.btns.print.onclick = () => window.print();
+
+        // Word Export Logic
+        function exportWord() {
+            const text = els.output.innerText;
+            const content = `
+                <html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
+                <head><meta charset='utf-8'><title>Belge</title></head>
+                <body>
+                    <p style="font-family: 'Times New Roman', serif; font-size: 12pt;">
+                        ${text.replace(/\n/g, '<br>')}
+                    </p>
+                </body>
+                </html>`;
+            
+            const blob = new Blob(['\ufeff', content], { type: 'application/msword' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `Resmi_Yazi_${new Date().toISOString().slice(0,10)}.doc`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        // --- History ---
+        function toggleHistory() {
+            els.history.modal.classList.toggle('hidden');
+            const panel = els.history.panel;
+            if (els.history.modal.classList.contains('hidden')) {
+                panel.classList.remove('translate-x-0');
+                panel.classList.add('translate-x-full');
+            } else {
+                panel.classList.remove('translate-x-full');
+                panel.classList.add('translate-x-0');
+                renderHistory();
+            }
+        }
+
+        function saveToHistory(orig, corr, tone) {
+            historyData.unshift({ id: Date.now(), date: new Date().toLocaleString('tr-TR'), original: orig, corrected: corr, tone: tone });
+            if(historyData.length > 20) historyData.pop();
+            localStorage.setItem('yazismaHistoryElite', JSON.stringify(historyData));
+        }
+
+        function renderHistory() {
+            const list = els.history.list;
+            list.innerHTML = '';
+            if (!historyData.length) return list.innerHTML = '<div class="text-center text-slate-400 py-10">Geçmiş boş.</div>';
+            
+            historyData.forEach(item => {
+                const div = document.createElement('div');
+                div.className = 'bg-white p-4 rounded-xl border border-slate-100 shadow-sm hover:shadow-md transition-shadow cursor-pointer';
+                div.onclick = () => { els.output.innerText = item.corrected; setActionsEnabled(true); toggleHistory(); };
+                div.innerHTML = `
+                    <div class="flex justify-between mb-2">
+                        <span class="text-[10px] font-bold uppercase bg-brand-50 text-brand-600 px-2 py-0.5 rounded">${item.tone}</span>
+                        <span class="text-[10px] text-slate-400">${item.date}</span>
+                    </div>
+                    <p class="text-xs text-slate-600 line-clamp-2 font-medium">${item.original}</p>
+                `;
+                list.appendChild(div);
+            });
+        }
+        
+        function clearHistory() {
+            if(confirm("Tüm geçmiş silinecek?")) {
+                historyData = [];
+                localStorage.removeItem('yazismaHistoryElite');
+                renderHistory();
+            }
+        }
     </script>
 </body>
 </html>
