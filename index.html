@@ -266,12 +266,25 @@
                     <label class="block text-sm font-medium text-slate-700 mb-1">Google Gemini API Anahtarı</label>
                     <input type="password" id="apiKeyInput" class="w-full p-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-brand-500 focus:border-brand-500 outline-none transition-all" placeholder="AI Studio'dan alınan anahtarı buraya yapıştırın...">
                     <p class="text-xs text-slate-500 mt-2">
-                        Anahtarınız sadece tarayıcınızda (Local Storage) saklanır. Ücretsiz anahtar almak için <a href="https://aistudio.google.com/app/apikey" target="_blank" class="text-brand-600 hover:underline">Google AI Studio</a>'yu ziyaret edin.
+                        Anahtarınız sadece tarayıcınızda saklanır. <a href="https://aistudio.google.com/app/apikey" target="_blank" class="text-brand-600 hover:underline font-bold">Buradan ücretsiz alabilirsiniz.</a>
                     </p>
                 </div>
+                
+                <!-- YENİ: Model Seçici -->
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-1">Yapay Zeka Modeli</label>
+                    <select id="modelSelect" class="w-full p-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-brand-500 outline-none bg-white transition-all cursor-pointer">
+                        <option value="gemini-1.5-flash-002">Gemini 1.5 Flash-002 (Önerilen/Stabil)</option>
+                        <option value="gemini-2.0-flash-exp">Gemini 2.0 Flash Exp (En Hızlı/Yeni)</option>
+                        <option value="gemini-1.5-flash">Gemini 1.5 Flash (Standart)</option>
+                        <option value="gemini-1.5-pro">Gemini 1.5 Pro (Daha Zeki/Yavaş)</option>
+                    </select>
+                    <p class="text-xs text-slate-500 mt-1">Hata alırsanız modeli değiştirmeyi deneyin.</p>
+                </div>
+
                 <div class="bg-blue-50 p-3 rounded-lg flex gap-3 text-sm text-blue-700 border border-blue-100">
                     <i class="ph-fill ph-info text-xl shrink-0"></i>
-                    <p>Kendi anahtarınızı girerseniz sistem daha hızlı ve stabil çalışır (Limitlere takılmazsınız).</p>
+                    <p>Kendi anahtarınızı girerseniz limitlere takılmadan çok daha hızlı çalışır.</p>
                 </div>
                 <button onclick="saveSettings()" class="w-full bg-brand-600 hover:bg-brand-700 text-white font-bold py-3 rounded-xl transition-all shadow-lg shadow-brand-500/30">Kaydet</button>
             </div>
@@ -280,8 +293,10 @@
 
     <script>
         // --- CONSTANTS ---
-        const CANVAS_KEY = ""; // Canvas environment handles this automatically if empty
+        const CANVAS_KEY = ""; 
         let userApiKey = localStorage.getItem('gemini_user_api_key') || "";
+        let userModel = localStorage.getItem('gemini_user_model') || "gemini-1.5-flash-002"; // Varsayılanı 002 yaptık
+        
         let historyData = JSON.parse(localStorage.getItem('yazismaHistoryElite')) || [];
         pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
 
@@ -298,6 +313,7 @@
             processStatus: document.getElementById('processStatus'),
             processText: document.getElementById('processText'),
             apiKeyInput: document.getElementById('apiKeyInput'),
+            modelSelect: document.getElementById('modelSelect'),
             btns: {
                 correct: document.getElementById('correctButton'),
                 copy: document.getElementById('copyBtn'),
@@ -323,20 +339,26 @@
             els.settings.modal.classList.toggle('hidden');
             if(!els.settings.modal.classList.contains('hidden')) {
                 els.apiKeyInput.value = userApiKey;
+                els.modelSelect.value = userModel;
             }
         }
 
         function saveSettings() {
             const key = els.apiKeyInput.value.trim();
+            const model = els.modelSelect.value;
+            
             if(key) {
                 localStorage.setItem('gemini_user_api_key', key);
                 userApiKey = key;
-                alert("Anahtar kaydedildi! Artık kendi API anahtarınızla çalışıyorsunuz.");
             } else {
                 localStorage.removeItem('gemini_user_api_key');
                 userApiKey = "";
-                alert("Anahtar silindi. Varsayılan sistem kullanılacak.");
             }
+            
+            localStorage.setItem('gemini_user_model', model);
+            userModel = model;
+            
+            alert("Ayarlar kaydedildi!");
             toggleSettings();
         }
 
@@ -416,7 +438,6 @@
                     const page = await pdf.getPage(i);
                     const textContent = await page.getTextContent();
                     
-                    // Sorting by Y (top to bottom), then X (left to right)
                     const items = textContent.items;
                     items.sort((a, b) => {
                         const yDiff = b.transform[5] - a.transform[5];
@@ -437,7 +458,6 @@
                     originalText += pageStr + "\n\n";
                 }
                 
-                // Cleaning Header Logic
                 const lines = originalText.split('\n');
                 let cleanedLines = [];
                 let headerPassed = false;
@@ -446,7 +466,6 @@
                 for(let line of lines) {
                     lineCount++;
                     const l = line.trim().toLowerCase();
-                    // Detect common header parts in first 20 lines
                     if (!headerPassed && lineCount < 20 && (
                         l.includes('t.c.') || l.includes('t.c ') || 
                         l.startsWith('sayı:') || l.startsWith('konu:') || 
@@ -459,7 +478,7 @@
                 }
                 
                 fullText = cleanedLines.join('\n').trim();
-                if(fullText.length < 10) fullText = originalText; // Fallback
+                if(fullText.length < 10) fullText = originalText; 
 
                 els.input.value = fullText;
                 els.input.dispatchEvent(new Event('input'));
@@ -482,10 +501,16 @@
             
             const finalPrompt = prompt + "\n\nÖNEMLİ: Cevapta 'T.C.', 'Sayı', 'Konu', 'Tarih' gibi resmi evrak başlıklarını KESİNLİKLE kullanma. Sadece metnin GÖVDE (içerik) kısmını yaz.";
 
-            // Determine API Key and Model
-            const apiKeyToUse = userApiKey || CANVAS_KEY;
-            // Use 1.5 Flash if user provides key (stable/free), otherwise use Preview model for Canvas
-            const modelToUse = userApiKey ? 'gemini-1.5-flash' : 'gemini-2.5-flash-preview-09-2025';
+            // Model ve Anahtar Seçimi
+            let apiKeyToUse = userApiKey;
+            let modelToUse = userModel; // Kullanıcının seçtiği model
+
+            // Eğer kullanıcı anahtarı yoksa (Canvas ortamı)
+            if (!userApiKey) {
+                apiKeyToUse = CANVAS_KEY; 
+                // Canvas için önizleme modeli şart
+                modelToUse = 'gemini-2.5-flash-preview-09-2025'; 
+            }
 
             try {
                 const resp = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${modelToUse}:generateContent?key=${apiKeyToUse}`, {
@@ -498,8 +523,9 @@
                 const data = await resp.json();
                 
                 if (!resp.ok) {
-                    const msg = data.error?.message || "Servis Hatası";
-                    if(msg.includes('API key')) throw new Error("API Anahtarı geçersiz. Lütfen ayarlardan kontrol edin.");
+                    let msg = data.error?.message || "Servis Hatası";
+                    if(msg.includes('API key')) msg = "API Anahtarı geçersiz veya eksik. Lütfen ayarlardan kontrol edin.";
+                    if(msg.includes('not found')) msg = `Seçilen model (${modelToUse}) şu an kullanılamıyor. Lütfen ayarlardan başka bir model seçin.`;
                     throw new Error(msg);
                 }
                 
